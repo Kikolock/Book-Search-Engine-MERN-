@@ -15,9 +15,10 @@ const SearchBooks = () => {
   const [searchedBooks, setSearchedBooks] = useState([]);
   // create state for holding our search field data
   const [searchInput, setSearchInput] = useState('');
-
   // create state to hold saved bookId values
   const [savedBookIds, setSavedBookIds] = useState(getSavedBookIds());
+  //create state to hold saved books and errors
+  const [saveBook, {error}] = useMutation(SAVE_BOOK);
 
   // set up useEffect hook to save `savedBookIds` list to localStorage on component unmount
   // learn more here: https://reactjs.org/docs/hooks-effect.html#effects-with-cleanup
@@ -55,8 +56,7 @@ const SearchBooks = () => {
       console.error(err);
     }
   };
-   // addUser will hold the output and error the error
-    const [saveBook, { error }] = useMutation(SAVE_BOOK);
+
   // create function to handle saving a book to our database
   const handleSaveBook = async (bookId) => {
     // find the book in `searchedBooks` state by the matching id
@@ -71,14 +71,18 @@ const SearchBooks = () => {
     try {
       // execute addUser mutation and pass in variable data from form
       const { data } = await saveBook({
-        variables: { bookInput: bookToSave }
+        variables: {input: {...bookToSave}}
       });
+
+      if (error) {
+        throw new Error("something went wrong!");
+      }
       // save id if successfully
       // if book successfully saves to user's account, save book id to state
       setSavedBookIds([...savedBookIds, bookToSave.bookId]);
       
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -126,7 +130,6 @@ const SearchBooks = () => {
                   <Card.Title>{book.title}</Card.Title>
                   <p className='small'>Authors: {book.authors}</p>
                   <Card.Text>{book.description}</Card.Text>
-                  <p> <a href={book.link} target="_blank"> Go to google book </a> </p>
                   {Auth.loggedIn() && (
                     <Button
                       disabled={savedBookIds?.some((savedBookId) => savedBookId === book.bookId)}
